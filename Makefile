@@ -11,7 +11,7 @@ help:
 .PHONY: help check-in-vagrant build-clang-plugin build-rust-tools test-rust-tools build-test-repo build-mozilla-repo baseline comparison
 
 check-in-vagrant:
-	@[ -d /vagrant ] || (echo "This command must be run inside the vagrant instance" > /dev/stderr; exit 1)
+	@[ -d . ] || (echo "This command must be run inside the vagrant instance" > /dev/stderr; exit 1)
 
 build-clang-plugin: check-in-vagrant
 	$(MAKE) -C clang-plugin
@@ -25,10 +25,10 @@ test-rust-tools:
 
 build-test-repo: check-in-vagrant build-clang-plugin build-rust-tools
 	mkdir -p ~/index
-	/vagrant/infrastructure/indexer-setup.sh /vagrant/tests config.json ~/index
-	/vagrant/infrastructure/indexer-run.sh /vagrant/tests ~/index
-	/vagrant/infrastructure/web-server-setup.sh /vagrant/tests config.json ~/index ~
-	/vagrant/infrastructure/web-server-run.sh /vagrant/tests ~/index ~
+	./infrastructure/indexer-setup.sh ./tests config.json ~/index
+	./infrastructure/indexer-run.sh ./tests ~/index
+	./infrastructure/web-server-setup.sh ./tests config.json ~/index ~
+	./infrastructure/web-server-run.sh ./tests ~/index ~
 
 build-searchfox-repo: check-in-vagrant build-clang-plugin build-rust-tools
 	mkdir -p ~/searchfox-index
@@ -40,18 +40,18 @@ build-searchfox-repo: check-in-vagrant build-clang-plugin build-rust-tools
 build-mozilla-repo: check-in-vagrant build-clang-plugin build-rust-tools
 	[ -d ~/mozilla-config ] || git clone https://github.com/mozsearch/mozsearch-mozilla ~/mozilla-config
 	mkdir -p ~/mozilla-index
-	/vagrant/infrastructure/indexer-setup.sh ~/mozilla-config config.json ~/mozilla-index
-	/vagrant/infrastructure/indexer-run.sh ~/mozilla-config ~/mozilla-index
-	/vagrant/infrastructure/web-server-setup.sh ~/mozilla-config config.json ~/mozilla-index ~
-	/vagrant/infrastructure/web-server-run.sh ~/mozilla-config ~/mozilla-index ~
+	./infrastructure/indexer-setup.sh ~/mozilla-config config.json ~/mozilla-index
+	./infrastructure/indexer-run.sh ~/mozilla-config ~/mozilla-index
+	./infrastructure/web-server-setup.sh ~/mozilla-config config.json ~/mozilla-index ~
+	./infrastructure/web-server-run.sh ~/mozilla-config ~/mozilla-index ~
 
 build-releases-repo: check-in-vagrant build-clang-plugin build-rust-tools
 	[ -d ~/mozilla-config ] || git clone https://github.com/mozsearch/mozsearch-mozilla ~/mozilla-config
 	mkdir -p ~/releases-index
-	/vagrant/infrastructure/indexer-setup.sh ~/mozilla-config mozilla-releases.json ~/releases-index
-	/vagrant/infrastructure/indexer-run.sh ~/mozilla-config ~/releases-index
-	/vagrant/infrastructure/web-server-setup.sh ~/mozilla-config mozilla-releases.json ~/releases-index ~
-	/vagrant/infrastructure/web-server-run.sh ~/mozilla-config ~/releases-index ~
+	./infrastructure/indexer-setup.sh ~/mozilla-config mozilla-releases.json ~/releases-index
+	./infrastructure/indexer-run.sh ~/mozilla-config ~/releases-index
+	./infrastructure/web-server-setup.sh ~/mozilla-config mozilla-releases.json ~/releases-index ~
+	./infrastructure/web-server-run.sh ~/mozilla-config ~/releases-index ~
 
 # This is similar to build-mozilla-repo, except it strips out the non-mozilla-central trees
 # from config.json and puts the stripped version into trypush.json.
@@ -59,10 +59,10 @@ trypush: check-in-vagrant build-clang-plugin build-rust-tools
 	[ -d ~/mozilla-config ] || git clone https://github.com/mozsearch/mozsearch-mozilla ~/mozilla-config
 	jq '{mozsearch_path, default_tree, trees: {"mozilla-central": .trees["mozilla-central"]}}' ~/mozilla-config/config.json > ~/mozilla-config/trypush.json
 	mkdir -p ~/trypush-index
-	/vagrant/infrastructure/indexer-setup.sh ~/mozilla-config trypush.json ~/trypush-index
-	/vagrant/infrastructure/indexer-run.sh ~/mozilla-config ~/trypush-index
-	/vagrant/infrastructure/web-server-setup.sh ~/mozilla-config trypush.json ~/trypush-index ~
-	/vagrant/infrastructure/web-server-run.sh ~/mozilla-config ~/trypush-index ~
+	./infrastructure/indexer-setup.sh ~/mozilla-config trypush.json ~/trypush-index
+	./infrastructure/indexer-run.sh ~/mozilla-config ~/trypush-index
+	./infrastructure/web-server-setup.sh ~/mozilla-config trypush.json ~/trypush-index ~
+	./infrastructure/web-server-run.sh ~/mozilla-config ~/trypush-index ~
 
 # To test changes to indexing, run this first to generate the baseline. Then
 # make your changes, and run `make comparison`. Note that we generate
@@ -73,15 +73,15 @@ trypush: check-in-vagrant build-clang-plugin build-rust-tools
 baseline: check-in-vagrant build-clang-plugin build-rust-tools
 	rm -rf ~/diffable ~/baseline
 	mkdir -p ~/diffable
-	/vagrant/infrastructure/indexer-setup.sh /vagrant/tests config.json ~/diffable
-	MOZSEARCH_DIFFABLE=1 /vagrant/infrastructure/indexer-run.sh /vagrant/tests ~/diffable
+	./infrastructure/indexer-setup.sh ./tests config.json ~/diffable
+	MOZSEARCH_DIFFABLE=1 ./infrastructure/indexer-run.sh ./tests ~/diffable
 	mv ~/diffable ~/baseline
 
 comparison: check-in-vagrant build-clang-plugin build-rust-tools
 	rm -rf ~/diffable ~/modified
 	mkdir -p ~/diffable
-	/vagrant/infrastructure/indexer-setup.sh /vagrant/tests config.json ~/diffable
-	MOZSEARCH_DIFFABLE=1 /vagrant/infrastructure/indexer-run.sh /vagrant/tests ~/diffable
+	./infrastructure/indexer-setup.sh ./tests config.json ~/diffable
+	MOZSEARCH_DIFFABLE=1 ./infrastructure/indexer-run.sh ./tests ~/diffable
 	mv ~/diffable ~/modified
 	@echo "------------------- Below is the diff between baseline and modified. ---------------------"
 	diff -u -r -x objdir ~/baseline/tests ~/modified/tests || true
